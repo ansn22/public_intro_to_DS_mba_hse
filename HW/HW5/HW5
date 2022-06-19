@@ -1,0 +1,2317 @@
+{
+ "cells": [
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## Введение в DS на УБ и МиРА (2022)\n",
+    "### Домашнее задание #5:  Ближайшие соседи\n",
+    "Дедлайн: 19 июня 2022 года, 23:59\n",
+    "Правила игры\n",
+    "\n",
+    "Домашнее задание состоит из двух частей, которые оцениваются в 3 - 7 балла. Все пункты в пределах одной части имеют одинаковый вес.\n",
+    "\n",
+    "Решения принимаются до 19 июня 2022 года, 23:59 МСК включительно. Работы, отправленные после дедлайна, не проверяются. Дата и время сдачи определяются по последнему запушенному в репозиторий коммиту (можно увидеть на GitHub, наведя мышкой на указатель срока (например, 3 days ago) справа от файлов).\n",
+    "\n",
+    "Все решения нужно загрузить в личный репозиторий на GitHub Classroom.\n",
+    "\n",
+    "Разрешается использовать без доказательства любые результаты, встречавшиеся на лекциях или семинарах по курсу, если получение этих результатов не является вопросом задания. Разрешается использовать любые свободные источники с указанием ссылки на них.\n",
+    "\n",
+    "Плагиат не допускается. При обнаружении случаев списывания, \n",
+    "0\n",
+    " за работу выставляется всем участникам нарушения, даже если можно установить, кто у кого списал.\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    " ---"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "В этом задании будем предсказывать удовлетворенность студентов их программой (`LikeDegree`). Скачайте  Student_Behaviour.csv, содержащую информацию о студентах бакалавриата.\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "### Часть 1: Исследуем данные\n",
+    "**Задание 1.** Загрузите данные из файла Student_Behaviour.csv. Выведите первые 5 строк таблицы."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 1,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "import numpy as np\n",
+    "import pandas as pd\n",
+    "import matplotlib.pyplot as plt\n",
+    "import seaborn as sns"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 2,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "  CertificationCourses  Gender Department  Height(CM)  Weight(KG)  10Mark  \\\n",
+      "0                   No    Male        BCA       100.0        58.0    79.0   \n",
+      "1                   No  Female        BCA        90.0        40.0    70.0   \n",
+      "2                  Yes    Male        BCA       159.0        78.0    69.5   \n",
+      "3                  Yes  Female        BCA       147.0        20.0    70.0   \n",
+      "4                   No    Male        BCA       170.0        54.0    40.0   \n",
+      "\n",
+      "   12Mark  CollegeMark        Hobbies DailyStudingTime PreferToStudyIn  \\\n",
+      "0    65.0         80.0    Video Games    0 - 30 minute         Morning   \n",
+      "1    80.0         70.0         Cinema   30 - 60 minute         Morning   \n",
+      "2    61.0         55.0         Cinema       1 - 2 Hour         Anytime   \n",
+      "3    59.0         58.0  Reading books       1 - 2 Hour         Anytime   \n",
+      "4    65.0         30.0    Video Games   30 - 60 minute         Morning   \n",
+      "\n",
+      "   SalaryExpectation LikeDegree CareerBasedonDegree GamesSpendingTime  \\\n",
+      "0              40000         No                 50%     1.30 - 2 hour   \n",
+      "1              15000        Yes                 75%     1 - 1.30 hour   \n",
+      "2              13000        Yes                 50%  More than 2 hour   \n",
+      "3            1500000         No                 50%     1.30 - 2 hour   \n",
+      "4              50000        Yes                 25%     1.30 - 2 hour   \n",
+      "\n",
+      "   TravellingTime  StressLevel  FinancialStatus PartTimeJob?  \n",
+      "0  30 - 60 minutes          Bad             Bad           No  \n",
+      "1   0 - 30 minutes          Bad             Bad           No  \n",
+      "2  30 - 60 minutes        Awful             Bad           No  \n",
+      "3   0 - 30 minutes          Bad            good           No  \n",
+      "4  30 - 60 minutes         Good            good           No  \n"
+     ]
+    }
+   ],
+   "source": [
+    "df = pd.read_csv(\"Student_Behaviour.csv\")\n",
+    "print(df[:5])"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "**Задание 2.** Проверьте колонки на наличие пропусков, избавьтесь их. "
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 80,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "CertificationCourses    0\n",
+       "Gender                  0\n",
+       "Department              0\n",
+       "Height(CM)              0\n",
+       "Weight(KG)              0\n",
+       "10Mark                  0\n",
+       "12Mark                  0\n",
+       "CollegeMark             0\n",
+       "Hobbies                 0\n",
+       "DailyStudingTime        0\n",
+       "PreferToStudyIn         0\n",
+       "SalaryExpectation       0\n",
+       "LikeDegree              0\n",
+       "CareerBasedonDegree     0\n",
+       "GamesSpendingTime       0\n",
+       "TravellingTime          0\n",
+       "StressLevel             0\n",
+       "FinancialStatus         0\n",
+       "PartTimeJob?            0\n",
+       "dtype: int64"
+      ]
+     },
+     "execution_count": 80,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "df.isnull().sum()"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Мы видим, что ни в одной колонке пропусков нет. Нам повезло :)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "**Задание 3.**  Колонку `CareerBasedonDegree` приведите к числовому виду."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 81,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/html": [
+       "<div>\n",
+       "<style scoped>\n",
+       "    .dataframe tbody tr th:only-of-type {\n",
+       "        vertical-align: middle;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe tbody tr th {\n",
+       "        vertical-align: top;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe thead th {\n",
+       "        text-align: right;\n",
+       "    }\n",
+       "</style>\n",
+       "<table border=\"1\" class=\"dataframe\">\n",
+       "  <thead>\n",
+       "    <tr style=\"text-align: right;\">\n",
+       "      <th></th>\n",
+       "      <th>CertificationCourses</th>\n",
+       "      <th>Gender</th>\n",
+       "      <th>Department</th>\n",
+       "      <th>Height(CM)</th>\n",
+       "      <th>Weight(KG)</th>\n",
+       "      <th>10Mark</th>\n",
+       "      <th>12Mark</th>\n",
+       "      <th>CollegeMark</th>\n",
+       "      <th>Hobbies</th>\n",
+       "      <th>DailyStudingTime</th>\n",
+       "      <th>PreferToStudyIn</th>\n",
+       "      <th>SalaryExpectation</th>\n",
+       "      <th>LikeDegree</th>\n",
+       "      <th>CareerBasedonDegree</th>\n",
+       "      <th>GamesSpendingTime</th>\n",
+       "      <th>TravellingTime</th>\n",
+       "      <th>StressLevel</th>\n",
+       "      <th>FinancialStatus</th>\n",
+       "      <th>PartTimeJob?</th>\n",
+       "    </tr>\n",
+       "  </thead>\n",
+       "  <tbody>\n",
+       "    <tr>\n",
+       "      <th>0</th>\n",
+       "      <td>No</td>\n",
+       "      <td>Male</td>\n",
+       "      <td>BCA</td>\n",
+       "      <td>100.0</td>\n",
+       "      <td>58.0</td>\n",
+       "      <td>79.0</td>\n",
+       "      <td>65.0</td>\n",
+       "      <td>80.0</td>\n",
+       "      <td>Video Games</td>\n",
+       "      <td>0 - 30 minute</td>\n",
+       "      <td>Morning</td>\n",
+       "      <td>40000</td>\n",
+       "      <td>No</td>\n",
+       "      <td>50%</td>\n",
+       "      <td>1.30 - 2 hour</td>\n",
+       "      <td>30 - 60 minutes</td>\n",
+       "      <td>Bad</td>\n",
+       "      <td>Bad</td>\n",
+       "      <td>No</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>1</th>\n",
+       "      <td>No</td>\n",
+       "      <td>Female</td>\n",
+       "      <td>BCA</td>\n",
+       "      <td>90.0</td>\n",
+       "      <td>40.0</td>\n",
+       "      <td>70.0</td>\n",
+       "      <td>80.0</td>\n",
+       "      <td>70.0</td>\n",
+       "      <td>Cinema</td>\n",
+       "      <td>30 - 60 minute</td>\n",
+       "      <td>Morning</td>\n",
+       "      <td>15000</td>\n",
+       "      <td>Yes</td>\n",
+       "      <td>75%</td>\n",
+       "      <td>1 - 1.30 hour</td>\n",
+       "      <td>0 - 30 minutes</td>\n",
+       "      <td>Bad</td>\n",
+       "      <td>Bad</td>\n",
+       "      <td>No</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>2</th>\n",
+       "      <td>Yes</td>\n",
+       "      <td>Male</td>\n",
+       "      <td>BCA</td>\n",
+       "      <td>159.0</td>\n",
+       "      <td>78.0</td>\n",
+       "      <td>69.5</td>\n",
+       "      <td>61.0</td>\n",
+       "      <td>55.0</td>\n",
+       "      <td>Cinema</td>\n",
+       "      <td>1 - 2 Hour</td>\n",
+       "      <td>Anytime</td>\n",
+       "      <td>13000</td>\n",
+       "      <td>Yes</td>\n",
+       "      <td>50%</td>\n",
+       "      <td>More than 2 hour</td>\n",
+       "      <td>30 - 60 minutes</td>\n",
+       "      <td>Awful</td>\n",
+       "      <td>Bad</td>\n",
+       "      <td>No</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>3</th>\n",
+       "      <td>Yes</td>\n",
+       "      <td>Female</td>\n",
+       "      <td>BCA</td>\n",
+       "      <td>147.0</td>\n",
+       "      <td>20.0</td>\n",
+       "      <td>70.0</td>\n",
+       "      <td>59.0</td>\n",
+       "      <td>58.0</td>\n",
+       "      <td>Reading books</td>\n",
+       "      <td>1 - 2 Hour</td>\n",
+       "      <td>Anytime</td>\n",
+       "      <td>1500000</td>\n",
+       "      <td>No</td>\n",
+       "      <td>50%</td>\n",
+       "      <td>1.30 - 2 hour</td>\n",
+       "      <td>0 - 30 minutes</td>\n",
+       "      <td>Bad</td>\n",
+       "      <td>good</td>\n",
+       "      <td>No</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>4</th>\n",
+       "      <td>No</td>\n",
+       "      <td>Male</td>\n",
+       "      <td>BCA</td>\n",
+       "      <td>170.0</td>\n",
+       "      <td>54.0</td>\n",
+       "      <td>40.0</td>\n",
+       "      <td>65.0</td>\n",
+       "      <td>30.0</td>\n",
+       "      <td>Video Games</td>\n",
+       "      <td>30 - 60 minute</td>\n",
+       "      <td>Morning</td>\n",
+       "      <td>50000</td>\n",
+       "      <td>Yes</td>\n",
+       "      <td>25%</td>\n",
+       "      <td>1.30 - 2 hour</td>\n",
+       "      <td>30 - 60 minutes</td>\n",
+       "      <td>Good</td>\n",
+       "      <td>good</td>\n",
+       "      <td>No</td>\n",
+       "    </tr>\n",
+       "  </tbody>\n",
+       "</table>\n",
+       "</div>"
+      ],
+      "text/plain": [
+       "  CertificationCourses  Gender Department  Height(CM)  Weight(KG)  10Mark  \\\n",
+       "0                   No    Male        BCA       100.0        58.0    79.0   \n",
+       "1                   No  Female        BCA        90.0        40.0    70.0   \n",
+       "2                  Yes    Male        BCA       159.0        78.0    69.5   \n",
+       "3                  Yes  Female        BCA       147.0        20.0    70.0   \n",
+       "4                   No    Male        BCA       170.0        54.0    40.0   \n",
+       "\n",
+       "   12Mark  CollegeMark        Hobbies DailyStudingTime PreferToStudyIn  \\\n",
+       "0    65.0         80.0    Video Games    0 - 30 minute         Morning   \n",
+       "1    80.0         70.0         Cinema   30 - 60 minute         Morning   \n",
+       "2    61.0         55.0         Cinema       1 - 2 Hour         Anytime   \n",
+       "3    59.0         58.0  Reading books       1 - 2 Hour         Anytime   \n",
+       "4    65.0         30.0    Video Games   30 - 60 minute         Morning   \n",
+       "\n",
+       "   SalaryExpectation LikeDegree CareerBasedonDegree GamesSpendingTime  \\\n",
+       "0              40000         No                 50%     1.30 - 2 hour   \n",
+       "1              15000        Yes                 75%     1 - 1.30 hour   \n",
+       "2              13000        Yes                 50%  More than 2 hour   \n",
+       "3            1500000         No                 50%     1.30 - 2 hour   \n",
+       "4              50000        Yes                 25%     1.30 - 2 hour   \n",
+       "\n",
+       "   TravellingTime  StressLevel  FinancialStatus PartTimeJob?  \n",
+       "0  30 - 60 minutes          Bad             Bad           No  \n",
+       "1   0 - 30 minutes          Bad             Bad           No  \n",
+       "2  30 - 60 minutes        Awful             Bad           No  \n",
+       "3   0 - 30 minutes          Bad            good           No  \n",
+       "4  30 - 60 minutes         Good            good           No  "
+      ]
+     },
+     "execution_count": 81,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "df.head()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 3,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "df['CareerBasedonDegree'] = df['CareerBasedonDegree'].str.rstrip('%').astype('float') / 100.0"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 4,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/html": [
+       "<div>\n",
+       "<style scoped>\n",
+       "    .dataframe tbody tr th:only-of-type {\n",
+       "        vertical-align: middle;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe tbody tr th {\n",
+       "        vertical-align: top;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe thead th {\n",
+       "        text-align: right;\n",
+       "    }\n",
+       "</style>\n",
+       "<table border=\"1\" class=\"dataframe\">\n",
+       "  <thead>\n",
+       "    <tr style=\"text-align: right;\">\n",
+       "      <th></th>\n",
+       "      <th>CertificationCourses</th>\n",
+       "      <th>Gender</th>\n",
+       "      <th>Department</th>\n",
+       "      <th>Height(CM)</th>\n",
+       "      <th>Weight(KG)</th>\n",
+       "      <th>10Mark</th>\n",
+       "      <th>12Mark</th>\n",
+       "      <th>CollegeMark</th>\n",
+       "      <th>Hobbies</th>\n",
+       "      <th>DailyStudingTime</th>\n",
+       "      <th>PreferToStudyIn</th>\n",
+       "      <th>SalaryExpectation</th>\n",
+       "      <th>LikeDegree</th>\n",
+       "      <th>CareerBasedonDegree</th>\n",
+       "      <th>GamesSpendingTime</th>\n",
+       "      <th>TravellingTime</th>\n",
+       "      <th>StressLevel</th>\n",
+       "      <th>FinancialStatus</th>\n",
+       "      <th>PartTimeJob?</th>\n",
+       "    </tr>\n",
+       "  </thead>\n",
+       "  <tbody>\n",
+       "    <tr>\n",
+       "      <th>0</th>\n",
+       "      <td>No</td>\n",
+       "      <td>Male</td>\n",
+       "      <td>BCA</td>\n",
+       "      <td>100.0</td>\n",
+       "      <td>58.0</td>\n",
+       "      <td>79.0</td>\n",
+       "      <td>65.0</td>\n",
+       "      <td>80.0</td>\n",
+       "      <td>Video Games</td>\n",
+       "      <td>0 - 30 minute</td>\n",
+       "      <td>Morning</td>\n",
+       "      <td>40000</td>\n",
+       "      <td>No</td>\n",
+       "      <td>0.50</td>\n",
+       "      <td>1.30 - 2 hour</td>\n",
+       "      <td>30 - 60 minutes</td>\n",
+       "      <td>Bad</td>\n",
+       "      <td>Bad</td>\n",
+       "      <td>No</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>1</th>\n",
+       "      <td>No</td>\n",
+       "      <td>Female</td>\n",
+       "      <td>BCA</td>\n",
+       "      <td>90.0</td>\n",
+       "      <td>40.0</td>\n",
+       "      <td>70.0</td>\n",
+       "      <td>80.0</td>\n",
+       "      <td>70.0</td>\n",
+       "      <td>Cinema</td>\n",
+       "      <td>30 - 60 minute</td>\n",
+       "      <td>Morning</td>\n",
+       "      <td>15000</td>\n",
+       "      <td>Yes</td>\n",
+       "      <td>0.75</td>\n",
+       "      <td>1 - 1.30 hour</td>\n",
+       "      <td>0 - 30 minutes</td>\n",
+       "      <td>Bad</td>\n",
+       "      <td>Bad</td>\n",
+       "      <td>No</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>2</th>\n",
+       "      <td>Yes</td>\n",
+       "      <td>Male</td>\n",
+       "      <td>BCA</td>\n",
+       "      <td>159.0</td>\n",
+       "      <td>78.0</td>\n",
+       "      <td>69.5</td>\n",
+       "      <td>61.0</td>\n",
+       "      <td>55.0</td>\n",
+       "      <td>Cinema</td>\n",
+       "      <td>1 - 2 Hour</td>\n",
+       "      <td>Anytime</td>\n",
+       "      <td>13000</td>\n",
+       "      <td>Yes</td>\n",
+       "      <td>0.50</td>\n",
+       "      <td>More than 2 hour</td>\n",
+       "      <td>30 - 60 minutes</td>\n",
+       "      <td>Awful</td>\n",
+       "      <td>Bad</td>\n",
+       "      <td>No</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>3</th>\n",
+       "      <td>Yes</td>\n",
+       "      <td>Female</td>\n",
+       "      <td>BCA</td>\n",
+       "      <td>147.0</td>\n",
+       "      <td>20.0</td>\n",
+       "      <td>70.0</td>\n",
+       "      <td>59.0</td>\n",
+       "      <td>58.0</td>\n",
+       "      <td>Reading books</td>\n",
+       "      <td>1 - 2 Hour</td>\n",
+       "      <td>Anytime</td>\n",
+       "      <td>1500000</td>\n",
+       "      <td>No</td>\n",
+       "      <td>0.50</td>\n",
+       "      <td>1.30 - 2 hour</td>\n",
+       "      <td>0 - 30 minutes</td>\n",
+       "      <td>Bad</td>\n",
+       "      <td>good</td>\n",
+       "      <td>No</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>4</th>\n",
+       "      <td>No</td>\n",
+       "      <td>Male</td>\n",
+       "      <td>BCA</td>\n",
+       "      <td>170.0</td>\n",
+       "      <td>54.0</td>\n",
+       "      <td>40.0</td>\n",
+       "      <td>65.0</td>\n",
+       "      <td>30.0</td>\n",
+       "      <td>Video Games</td>\n",
+       "      <td>30 - 60 minute</td>\n",
+       "      <td>Morning</td>\n",
+       "      <td>50000</td>\n",
+       "      <td>Yes</td>\n",
+       "      <td>0.25</td>\n",
+       "      <td>1.30 - 2 hour</td>\n",
+       "      <td>30 - 60 minutes</td>\n",
+       "      <td>Good</td>\n",
+       "      <td>good</td>\n",
+       "      <td>No</td>\n",
+       "    </tr>\n",
+       "  </tbody>\n",
+       "</table>\n",
+       "</div>"
+      ],
+      "text/plain": [
+       "  CertificationCourses  Gender Department  Height(CM)  Weight(KG)  10Mark  \\\n",
+       "0                   No    Male        BCA       100.0        58.0    79.0   \n",
+       "1                   No  Female        BCA        90.0        40.0    70.0   \n",
+       "2                  Yes    Male        BCA       159.0        78.0    69.5   \n",
+       "3                  Yes  Female        BCA       147.0        20.0    70.0   \n",
+       "4                   No    Male        BCA       170.0        54.0    40.0   \n",
+       "\n",
+       "   12Mark  CollegeMark        Hobbies DailyStudingTime PreferToStudyIn  \\\n",
+       "0    65.0         80.0    Video Games    0 - 30 minute         Morning   \n",
+       "1    80.0         70.0         Cinema   30 - 60 minute         Morning   \n",
+       "2    61.0         55.0         Cinema       1 - 2 Hour         Anytime   \n",
+       "3    59.0         58.0  Reading books       1 - 2 Hour         Anytime   \n",
+       "4    65.0         30.0    Video Games   30 - 60 minute         Morning   \n",
+       "\n",
+       "   SalaryExpectation LikeDegree  CareerBasedonDegree GamesSpendingTime  \\\n",
+       "0              40000         No                 0.50     1.30 - 2 hour   \n",
+       "1              15000        Yes                 0.75     1 - 1.30 hour   \n",
+       "2              13000        Yes                 0.50  More than 2 hour   \n",
+       "3            1500000         No                 0.50     1.30 - 2 hour   \n",
+       "4              50000        Yes                 0.25     1.30 - 2 hour   \n",
+       "\n",
+       "   TravellingTime  StressLevel  FinancialStatus PartTimeJob?  \n",
+       "0  30 - 60 minutes          Bad             Bad           No  \n",
+       "1   0 - 30 minutes          Bad             Bad           No  \n",
+       "2  30 - 60 minutes        Awful             Bad           No  \n",
+       "3   0 - 30 minutes          Bad            good           No  \n",
+       "4  30 - 60 minutes         Good            good           No  "
+      ]
+     },
+     "execution_count": 4,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "df.head()"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Источник: https://www.stackfinder.ru/questions/25669588/convert-percent-string-to-float-in-pandas-read-csv"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "**Задание 4.**  В датасете есть 3 поля, с суффиксом `Time`, данные в них строковые, которые означают временной интервал. Извлеките минимальное время (левую границу интервала) для каждой из этих переменных и переведите в минуты, запишите в новые столбцы, удалите старые."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 5,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "t = ['GamesSpendingTime', 'TravellingTime ', 'DailyStudingTime']"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 6,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "def time(t):\n",
+    "    for i in t:\n",
+    "        df[i] = df[i].replace(' -', '').astype('object')\n",
+    "        df[i] = df[i].replace(' hour', '').astype('object')\n",
+    "        df[i] = df[i].replace('Hour', '').astype('object')\n",
+    "        df[i] = df[i].replace('More than', '').astype('object')\n",
+    "        df[i] = df[i].replace(' minute', ', ').astype('object')\n",
+    "        df[i] = df[i].str.extract('(-?\\d+\\.?\\d*)').astype('float')"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 7,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "time(t)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 8,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "df['GamesSpendingTime'] = df['GamesSpendingTime'].apply(lambda x: (x*60) if x <= 4 else (x*1))"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 9,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "df['TravellingTime '] = df['TravellingTime '].apply(lambda x: (x*60) if x <= 4 else (x*1))"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 10,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "df['DailyStudingTime'] = df['DailyStudingTime'].apply(lambda x: (x*60) if x <= 4 else (x*1))"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 10,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "0       78.0\n",
+       "1       60.0\n",
+       "2      120.0\n",
+       "3       78.0\n",
+       "4       78.0\n",
+       "       ...  \n",
+       "230    120.0\n",
+       "231     30.0\n",
+       "232     30.0\n",
+       "233    120.0\n",
+       "234     30.0\n",
+       "Name: GamesSpendingTime, Length: 235, dtype: float64"
+      ]
+     },
+     "execution_count": 10,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "df['GamesSpendingTime']"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 11,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "0       30.0\n",
+       "1        0.0\n",
+       "2       30.0\n",
+       "3        0.0\n",
+       "4       30.0\n",
+       "       ...  \n",
+       "230     30.0\n",
+       "231     30.0\n",
+       "232    138.0\n",
+       "233    138.0\n",
+       "234    138.0\n",
+       "Name: TravellingTime , Length: 235, dtype: float64"
+      ]
+     },
+     "execution_count": 11,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "df['TravellingTime ']"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 12,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "0        0.0\n",
+       "1       30.0\n",
+       "2       60.0\n",
+       "3       60.0\n",
+       "4       30.0\n",
+       "       ...  \n",
+       "230     30.0\n",
+       "231    120.0\n",
+       "232     30.0\n",
+       "233      0.0\n",
+       "234    180.0\n",
+       "Name: DailyStudingTime, Length: 235, dtype: float64"
+      ]
+     },
+     "execution_count": 12,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "df['DailyStudingTime']"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Убрали все лишние знаки и буквы и оставили только первое значение.\n",
+    "Источник: https://www.rupython.com/int-pandas-23855.html"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "**Задание 5.**  Выберите колонки (непрерывные переменные), которые будете использовать для предсказания целевой переменной с помощью knn."
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Я хочу взять 3 непрерывные переменные: '12Mark', '10Mark', 'CollegeMark', поэтому именно их я буду использовать для предсказания целевой переменной 'LikeDegree'."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 11,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "real_viriables = ['12Mark', '10Mark', 'CollegeMark']"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "**Задание 6.**  Есть ли в выбранных колонках выбросы? (Пока не нужно их чистить)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 25,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "<AxesSubplot:>"
+      ]
+     },
+     "execution_count": 25,
+     "metadata": {},
+     "output_type": "execute_result"
+    },
+    {
+     "data": {
+      "image/png": "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\n",
+      "text/plain": [
+       "<Figure size 432x288 with 1 Axes>"
+      ]
+     },
+     "metadata": {
+      "needs_background": "light"
+     },
+     "output_type": "display_data"
+    }
+   ],
+   "source": [
+    "df.boxplot(real_viriables)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "По графику видно, что в переменной '10Mark' и 'CollegeMark' есть выбросы (кружочки ниже границ)."
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "**Задание 7.**  Как распределена целевая переменная? Нет ли дисбаланса классов? Если есть дисбаланс, какие метрики качества классификатора можно использовать, какие нет? Рассматриваем метрики, которые проходили в рамках курса."
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Построим гистограмму для проверки распределения."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 28,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "image/png": "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\n",
+      "text/plain": [
+       "<Figure size 360x360 with 1 Axes>"
+      ]
+     },
+     "metadata": {
+      "needs_background": "light"
+     },
+     "output_type": "display_data"
+    }
+   ],
+   "source": [
+    "dff = df['LikeDegree'].hist(figsize = (5, 5))"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Мы видим большой дисбаланс классов, большинство из студентов удовлетворены их  программой.\n",
+    "При несбалансированных метриках нет смысла использовать метрику accuracy, а вот recall и precision не зависят от классового соотношения.\n",
+    "Источник: https://habr.com/ru/company/ods/blog/328372/"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "**Задание 8.**  Переведите целевую переменную к численному формату."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 56,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "df['LikeDegree'].replace({'No': 0, 'Yes': 1}, inplace = True)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "### Часть 2: Строим модели\n",
+    "**Задание 1.** Разбейте выборку на обучающую и тестовую."
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Определим целевую переменную (y) и предикторы (X)."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 57,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "y = df['LikeDegree']"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 58,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "X = df[real_viriables]"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 59,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "from sklearn.model_selection import train_test_split \n",
+    "\n",
+    "np.random.seed(123)\n",
+    "y_train, y_test, X_train, X_test = train_test_split(y, X, test_size = 0.3)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 72,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "(235, 19)"
+      ]
+     },
+     "execution_count": 72,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "df.shape"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Поделили обучающую и тестовую выборку в отношении 80/20."
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Источник: https://github.com/V-Marco/public_intro_to_DS_mba_hse/blob/main/seminars/week12%20-%20knn/sem12_classification.ipynb"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "**Задание 2.** Постройте наивную модель предсказания для целевой переменной. Наивная модель - это самая простая модель, без сложных зависимостей. Например, для регрессии наивная модель - среднее для целевой переменной (см. семинар 11). В данном случае наивной моделью может быть преположение \"все студенты (не)довольны\"."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 60,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "array([1., 1., 1., 1., 1.])"
+      ]
+     },
+     "execution_count": 60,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "y_pred_naive = np.ones(71)\n",
+    "y_pred_naive[:5]"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Источник: https://github.com/V-Marco/public_intro_to_DS_mba_hse/blob/main/seminars/Sem11_adv_linreg/S11_intro_Ds-Copy1.ipynb"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "**Задание 3.** Постройте модели ближайших соседей для 3, 5, 7 ближайших соседей. "
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 61,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "X_train = train[real_viriables].to_numpy()\n",
+    "X_test = test[real_viriables].to_numpy()"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    " "
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Построим модель kNN для 3 ближайших соседей."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 62,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "from sklearn.neighbors import KNeighborsClassifier\n",
+    "knn = KNeighborsClassifier(n_neighbors = 3)\n",
+    "\n",
+    "knn.fit(X_train, y_train)\n",
+    "\n",
+    "y_pred_3knn = knn.predict(X_test)\n",
+    "\n",
+    "p_pred_3knn = knn.predict_proba(X_test) \n",
+    "p_pred_3knn = p_pred_3knn[:, 1]"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 63,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "array([1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0,\n",
+       "       1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0,\n",
+       "       1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,\n",
+       "       1, 1, 1, 0, 1], dtype=int64)"
+      ]
+     },
+     "execution_count": 63,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "y_pred_3knn"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 64,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "array([1.        , 1.        , 1.        , 1.        , 1.        ,\n",
+       "       1.        , 0.66666667, 0.66666667, 1.        , 1.        ,\n",
+       "       1.        , 1.        , 1.        , 1.        , 1.        ,\n",
+       "       0.66666667, 1.        , 1.        , 1.        , 1.        ,\n",
+       "       1.        , 0.33333333, 0.66666667, 1.        , 1.        ,\n",
+       "       1.        , 1.        , 1.        , 1.        , 1.        ,\n",
+       "       1.        , 1.        , 1.        , 1.        , 1.        ,\n",
+       "       1.        , 1.        , 1.        , 0.66666667, 1.        ,\n",
+       "       1.        , 1.        , 0.66666667, 0.33333333, 1.        ,\n",
+       "       1.        , 1.        , 1.        , 0.66666667, 1.        ,\n",
+       "       1.        , 1.        , 1.        , 1.        , 1.        ,\n",
+       "       1.        , 1.        , 1.        , 1.        , 1.        ,\n",
+       "       1.        , 1.        , 1.        , 1.        , 1.        ,\n",
+       "       1.        , 1.        , 1.        , 1.        , 0.33333333,\n",
+       "       0.66666667])"
+      ]
+     },
+     "execution_count": 64,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "p_pred_3knn"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    " "
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Построим модель kNN для 5 ближайших соседей."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 65,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "from sklearn.neighbors import KNeighborsClassifier\n",
+    "knn = KNeighborsClassifier(n_neighbors = 5)\n",
+    "\n",
+    "knn.fit(X_train, y_train)\n",
+    "\n",
+    "y_pred_5knn = knn.predict(X_test)\n",
+    "\n",
+    "p_pred_5knn = knn.predict_proba(X_test) \n",
+    "p_pred_5knn = p_pred_5knn[:, 1]"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 66,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "array([1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,\n",
+       "       1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,\n",
+       "       1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,\n",
+       "       1, 1, 1, 1, 1], dtype=int64)"
+      ]
+     },
+     "execution_count": 66,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "y_pred_5knn"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 67,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "array([1. , 1. , 1. , 1. , 1. , 1. , 0.6, 0.8, 1. , 1. , 1. , 0.8, 1. ,\n",
+       "       1. , 0.8, 0.6, 1. , 0.8, 1. , 1. , 1. , 0.6, 0.6, 1. , 1. , 0.8,\n",
+       "       1. , 0.8, 1. , 0.8, 1. , 1. , 1. , 1. , 1. , 1. , 1. , 1. , 0.8,\n",
+       "       0.8, 1. , 1. , 0.8, 0.6, 1. , 1. , 1. , 1. , 0.8, 1. , 1. , 0.8,\n",
+       "       1. , 1. , 1. , 1. , 0.8, 0.8, 1. , 1. , 1. , 1. , 1. , 1. , 1. ,\n",
+       "       1. , 1. , 1. , 0.8, 0.6, 0.8])"
+      ]
+     },
+     "execution_count": 67,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "p_pred_5knn"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    " "
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Построим модель kNN для 7 ближайших соседей."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 68,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "from sklearn.neighbors import KNeighborsClassifier\n",
+    "knn = KNeighborsClassifier(n_neighbors = 7)\n",
+    "\n",
+    "knn.fit(X_train, y_train)\n",
+    "\n",
+    "y_pred_7knn = knn.predict(X_test)\n",
+    "\n",
+    "p_pred_7knn = knn.predict_proba(X_test) \n",
+    "p_pred_7knn = p_pred_7knn[:, 1]"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 69,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "array([1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,\n",
+       "       1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,\n",
+       "       1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,\n",
+       "       1, 1, 1, 1, 1], dtype=int64)"
+      ]
+     },
+     "execution_count": 69,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "y_pred_7knn"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 70,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "array([1.        , 1.        , 0.71428571, 1.        , 1.        ,\n",
+       "       0.85714286, 0.71428571, 0.85714286, 1.        , 1.        ,\n",
+       "       1.        , 0.85714286, 0.85714286, 1.        , 0.71428571,\n",
+       "       0.71428571, 1.        , 0.85714286, 1.        , 0.85714286,\n",
+       "       1.        , 0.71428571, 0.71428571, 1.        , 1.        ,\n",
+       "       0.85714286, 1.        , 0.85714286, 1.        , 0.71428571,\n",
+       "       1.        , 1.        , 1.        , 1.        , 1.        ,\n",
+       "       1.        , 1.        , 1.        , 0.85714286, 0.85714286,\n",
+       "       1.        , 1.        , 0.71428571, 0.71428571, 1.        ,\n",
+       "       1.        , 1.        , 1.        , 0.85714286, 1.        ,\n",
+       "       1.        , 0.85714286, 0.85714286, 1.        , 0.85714286,\n",
+       "       1.        , 0.85714286, 0.85714286, 1.        , 1.        ,\n",
+       "       1.        , 1.        , 1.        , 1.        , 1.        ,\n",
+       "       1.        , 0.85714286, 1.        , 0.85714286, 0.71428571,\n",
+       "       0.85714286])"
+      ]
+     },
+     "execution_count": 70,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "p_pred_7knn"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "**Задание 4.** Постройте метрики качества на тестовой выборке (3 известных вам) для моделей из 1 и 2 задания и сравните между собой. Какая победила? "
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Найдём на всякий случай долю верно классифицированных объектов (accuracy)."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 147,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 72,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "0.8732394366197183\n",
+      "0.9154929577464789\n",
+      "0.9154929577464789\n"
+     ]
+    }
+   ],
+   "source": [
+    "print(accuracy_score(y_test, y_pred_3knn))\n",
+    "print(accuracy_score(y_test, y_pred_5knn))\n",
+    "print(accuracy_score(y_test, y_pred_7knn))"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 73,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "0.9154929577464789\n"
+     ]
+    }
+   ],
+   "source": [
+    "print(accuracy_score(y_test, y_pred_naive))"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    " "
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Найдём точность (precision)."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 74,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "0.9117647058823529\n",
+      "0.9154929577464789\n",
+      "0.9154929577464789\n"
+     ]
+    }
+   ],
+   "source": [
+    "print(precision_score(y_test, y_pred_3knn))\n",
+    "print(precision_score(y_test, y_pred_5knn))\n",
+    "print(precision_score(y_test, y_pred_7knn))"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 75,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "0.9154929577464789\n"
+     ]
+    }
+   ],
+   "source": [
+    "print(precision_score(y_test, y_pred_naive))"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    " "
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Найдём полноту (recall)."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 76,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "0.9538461538461539\n",
+      "1.0\n",
+      "1.0\n"
+     ]
+    }
+   ],
+   "source": [
+    "print(recall_score(y_test, y_pred_3knn))\n",
+    "print(recall_score(y_test, y_pred_5knn))\n",
+    "print(recall_score(y_test, y_pred_7knn))"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 77,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "1.0\n"
+     ]
+    }
+   ],
+   "source": [
+    "print(recall_score(y_test, y_pred_naive))"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    " "
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Найдём F-меру."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 148,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "0.9323308270676691\n",
+      "0.9558823529411764\n",
+      "0.9558823529411764\n"
+     ]
+    }
+   ],
+   "source": [
+    "print(f1_score(y_test, y_pred_3knn))\n",
+    "print(f1_score(y_test, y_pred_5knn))\n",
+    "print(f1_score(y_test, y_pred_7knn))"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 149,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "0.9558823529411764\n"
+     ]
+    }
+   ],
+   "source": [
+    "print(f1_score(y_test, y_pred_naive))"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Исходя из полученных данных, победила наивная модель: у неё выше показатели.\n",
+    "Источник: https://github.com/V-Marco/public_intro_to_DS_mba_hse/blob/main/seminars/week12%20-%20knn/sem12_classification.ipynb"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "**Задание 5.** Примените шкалирование (MinMax, обучите его на обучающей выборке к факторам, затем примените к тестовой), снова постройте модели для нескольких вариантов соседей (3, 5, 7). Помогло ли шкалирование? "
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 78,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "from sklearn.preprocessing import MinMaxScaler \n",
+    "scaler = MinMaxScaler( )\n",
+    "scaler.fit(X_train) \n",
+    "\n",
+    "X_train_norm = scaler.transform(X_train) \n",
+    "X_test_norm = scaler.transform(X_test)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 79,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "1.0 1.0111607142857142\n"
+     ]
+    }
+   ],
+   "source": [
+    "print(X_train_norm.max(), X_test_norm.max())"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Снова построим модель kNN для 3 ближайших соседей."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 80,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "knn = KNeighborsClassifier(n_neighbors = 3)\n",
+    "\n",
+    "knn.fit(X_train_norm, y_train)\n",
+    "\n",
+    "y_pred_3_knn = knn.predict(X_test_norm)\n",
+    "\n",
+    "p_pred_3_knn = knn.predict_proba(X_test_norm) \n",
+    "p_pred_3_knn = p_pred_3_knn[:, 1]"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 81,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "array([1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,\n",
+       "       1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0,\n",
+       "       1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,\n",
+       "       1, 1, 1, 0, 1], dtype=int64)"
+      ]
+     },
+     "execution_count": 81,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "y_pred_3_knn"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 82,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "array([1.        , 1.        , 1.        , 1.        , 1.        ,\n",
+       "       1.        , 0.66666667, 1.        , 1.        , 1.        ,\n",
+       "       1.        , 0.66666667, 1.        , 1.        , 1.        ,\n",
+       "       0.66666667, 1.        , 1.        , 1.        , 1.        ,\n",
+       "       1.        , 0.66666667, 0.66666667, 1.        , 1.        ,\n",
+       "       1.        , 1.        , 0.66666667, 1.        , 0.66666667,\n",
+       "       1.        , 1.        , 1.        , 1.        , 1.        ,\n",
+       "       1.        , 1.        , 1.        , 0.66666667, 0.66666667,\n",
+       "       1.        , 1.        , 0.66666667, 0.33333333, 1.        ,\n",
+       "       1.        , 1.        , 1.        , 1.        , 1.        ,\n",
+       "       1.        , 1.        , 1.        , 1.        , 1.        ,\n",
+       "       1.        , 1.        , 1.        , 1.        , 1.        ,\n",
+       "       1.        , 1.        , 1.        , 1.        , 1.        ,\n",
+       "       1.        , 1.        , 1.        , 1.        , 0.33333333,\n",
+       "       1.        ])"
+      ]
+     },
+     "execution_count": 82,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "p_pred_3_knn"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    " "
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Снова построим модель kNN для 5 ближайших соседей."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 83,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "knn = KNeighborsClassifier(n_neighbors = 5)\n",
+    "\n",
+    "knn.fit(X_train_norm, y_train)\n",
+    "\n",
+    "y_pred_5_knn = knn.predict(X_test_norm)\n",
+    "\n",
+    "p_pred_5_knn = knn.predict_proba(X_test_norm) \n",
+    "p_pred_5_knn = p_pred_5_knn[:, 1]"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 84,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "array([1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,\n",
+       "       1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,\n",
+       "       1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,\n",
+       "       1, 1, 1, 1, 1], dtype=int64)"
+      ]
+     },
+     "execution_count": 84,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "y_pred_5_knn"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 85,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "array([1. , 1. , 1. , 1. , 1. , 0.8, 0.8, 1. , 1. , 1. , 1. , 0.8, 1. ,\n",
+       "       1. , 0.8, 0.6, 1. , 1. , 1. , 1. , 1. , 0.6, 0.6, 1. , 1. , 1. ,\n",
+       "       1. , 0.8, 1. , 0.8, 1. , 1. , 1. , 0.8, 1. , 1. , 1. , 1. , 0.8,\n",
+       "       0.8, 1. , 1. , 0.8, 0.6, 1. , 1. , 1. , 1. , 0.8, 1. , 1. , 0.8,\n",
+       "       0.8, 1. , 0.8, 1. , 1. , 1. , 1. , 1. , 1. , 1. , 1. , 1. , 1. ,\n",
+       "       1. , 1. , 1. , 1. , 0.6, 0.8])"
+      ]
+     },
+     "execution_count": 85,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "p_pred_5_knn"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    " "
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Снова построим модель kNN для 7 ближайших соседей."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 86,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "knn = KNeighborsClassifier(n_neighbors = 7)\n",
+    "\n",
+    "knn.fit(X_train_norm, y_train)\n",
+    "\n",
+    "y_pred_7_knn = knn.predict(X_test_norm)\n",
+    "\n",
+    "p_pred_7_knn = knn.predict_proba(X_test_norm) \n",
+    "p_pred_7_knn = p_pred_7_knn[:, 1]"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 87,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "array([1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,\n",
+       "       1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,\n",
+       "       1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,\n",
+       "       1, 1, 1, 1, 1], dtype=int64)"
+      ]
+     },
+     "execution_count": 87,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "y_pred_7_knn"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 88,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "array([1.        , 1.        , 0.85714286, 1.        , 1.        ,\n",
+       "       0.85714286, 0.85714286, 0.85714286, 1.        , 1.        ,\n",
+       "       1.        , 0.85714286, 0.85714286, 1.        , 0.71428571,\n",
+       "       0.71428571, 1.        , 1.        , 1.        , 0.85714286,\n",
+       "       1.        , 0.71428571, 0.71428571, 1.        , 1.        ,\n",
+       "       1.        , 0.85714286, 0.85714286, 0.85714286, 0.85714286,\n",
+       "       1.        , 0.85714286, 1.        , 0.85714286, 0.85714286,\n",
+       "       0.85714286, 1.        , 1.        , 0.85714286, 0.85714286,\n",
+       "       1.        , 0.85714286, 0.85714286, 0.71428571, 1.        ,\n",
+       "       1.        , 1.        , 1.        , 0.85714286, 1.        ,\n",
+       "       1.        , 0.85714286, 0.85714286, 1.        , 0.85714286,\n",
+       "       1.        , 1.        , 1.        , 1.        , 1.        ,\n",
+       "       1.        , 1.        , 1.        , 1.        , 0.85714286,\n",
+       "       1.        , 0.71428571, 1.        , 0.85714286, 0.71428571,\n",
+       "       0.71428571])"
+      ]
+     },
+     "execution_count": 88,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "p_pred_7_knn"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Посчитаем метрики accuracy (на всякий случай), precision, recall и F-меру для оценки качества модели."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 89,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "0.8873239436619719\n",
+      "0.9154929577464789\n",
+      "0.9154929577464789\n"
+     ]
+    }
+   ],
+   "source": [
+    "print(accuracy_score(y_test, y_pred_3_knn))\n",
+    "print(accuracy_score(y_test, y_pred_5_knn))\n",
+    "print(accuracy_score(y_test, y_pred_7_knn))"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 90,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "0.9130434782608695\n",
+      "0.9154929577464789\n",
+      "0.9154929577464789\n"
+     ]
+    }
+   ],
+   "source": [
+    "print(precision_score(y_test, y_pred_3_knn))\n",
+    "print(precision_score(y_test, y_pred_5_knn))\n",
+    "print(precision_score(y_test, y_pred_7_knn))"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 91,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "0.9692307692307692\n",
+      "1.0\n",
+      "1.0\n"
+     ]
+    }
+   ],
+   "source": [
+    "print(recall_score(y_test, y_pred_3_knn))\n",
+    "print(recall_score(y_test, y_pred_5_knn))\n",
+    "print(recall_score(y_test, y_pred_7_knn))"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 151,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "0.9402985074626865\n",
+      "0.9558823529411764\n",
+      "0.9558823529411764\n"
+     ]
+    }
+   ],
+   "source": [
+    "print(f1_score(y_test, y_pred_3_knn))\n",
+    "print(f1_score(y_test, y_pred_5_knn))\n",
+    "print(f1_score(y_test, y_pred_7_knn))"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Качество модели с 3 ближайшими соседями улучшилось, остальные не изменились."
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "**Задание 6.** Избавьтесь от выбросов в исходной выборке, затем снова разделите ее на тестовую и обучающую, постройте модель для нескольких вариантов числа соседей(3, 5, 7). Какое число соседей лучшее и почему? Улучшилось ли качество модели по сравнению со лучшей моделью, в которой было применено шкалирование из задания 5?"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Будем считать, что выбросы находятся за пределами интервала от Q1 - 1.5IQR до Q3 + 1.5IQR."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 92,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "Q1 = np.percentile(df['LikeDegree'], 25,\n",
+    "                   interpolation = 'midpoint')\n",
+    " \n",
+    "Q3 = np.percentile(df['LikeDegree'], 75,\n",
+    "                   interpolation = 'midpoint')\n",
+    "IQR = Q3 - Q1\n",
+    "upper = Q3 + 1.5*IQR\n",
+    "lower = Q1 - 1.5*IQR\n",
+    "\n",
+    "df = df[(df['LikeDegree']>=lower)&(df['LikeDegree']<=upper)]"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Разделим получившуюся выборку на обучающую и тестовую в том же соотношении: 70/30. Затем построим модель для нескольких вариантов числа соседей."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 134,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "from sklearn.model_selection import train_test_split \n",
+    "\n",
+    "np.random.seed(123)\n",
+    "y_train, y_test, X_train, X_test = train_test_split(y, X, test_size = 0.3)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    " "
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Построим модель kNN для 3 ближайших соседей."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 135,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "knn = KNeighborsClassifier(n_neighbors = 3)\n",
+    "\n",
+    "knn.fit(X_train_norm, y_train)\n",
+    "\n",
+    "y_pred_knn_3 = knn.predict(X_test_norm)\n",
+    "\n",
+    "p_pred_knn_3 = knn.predict_proba(X_test_norm) \n",
+    "p_pred_knn_3 = p_pred_knn_3[:, 1]"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 136,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "array([1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,\n",
+       "       1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0,\n",
+       "       1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,\n",
+       "       1, 1, 1, 0, 1], dtype=int64)"
+      ]
+     },
+     "execution_count": 136,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "y_pred_knn_3"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 137,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "array([1.        , 1.        , 1.        , 1.        , 1.        ,\n",
+       "       1.        , 0.66666667, 1.        , 1.        , 1.        ,\n",
+       "       1.        , 0.66666667, 1.        , 1.        , 1.        ,\n",
+       "       0.66666667, 1.        , 1.        , 1.        , 1.        ,\n",
+       "       1.        , 0.66666667, 0.66666667, 1.        , 1.        ,\n",
+       "       1.        , 1.        , 0.66666667, 1.        , 0.66666667,\n",
+       "       1.        , 1.        , 1.        , 1.        , 1.        ,\n",
+       "       1.        , 1.        , 1.        , 0.66666667, 0.66666667,\n",
+       "       1.        , 1.        , 0.66666667, 0.33333333, 1.        ,\n",
+       "       1.        , 1.        , 1.        , 1.        , 1.        ,\n",
+       "       1.        , 1.        , 1.        , 1.        , 1.        ,\n",
+       "       1.        , 1.        , 1.        , 1.        , 1.        ,\n",
+       "       1.        , 1.        , 1.        , 1.        , 1.        ,\n",
+       "       1.        , 1.        , 1.        , 1.        , 0.33333333,\n",
+       "       1.        ])"
+      ]
+     },
+     "execution_count": 137,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "p_pred_knn_3"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    " "
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Построим модель kNN для 5 ближайших соседей."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 138,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "knn = KNeighborsClassifier(n_neighbors = 5)\n",
+    "\n",
+    "knn.fit(X_train_norm, y_train)\n",
+    "\n",
+    "y_pred_knn_5 = knn.predict(X_test_norm)\n",
+    "\n",
+    "p_pred_knn_5 = knn.predict_proba(X_test_norm) \n",
+    "p_pred_knn_5 = p_pred_knn_5[:, 1]"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 139,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "array([1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,\n",
+       "       1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,\n",
+       "       1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,\n",
+       "       1, 1, 1, 1, 1], dtype=int64)"
+      ]
+     },
+     "execution_count": 139,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "y_pred_knn_5"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 140,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "array([1. , 1. , 1. , 1. , 1. , 0.8, 0.8, 1. , 1. , 1. , 1. , 0.8, 1. ,\n",
+       "       1. , 0.8, 0.6, 1. , 1. , 1. , 1. , 1. , 0.6, 0.6, 1. , 1. , 1. ,\n",
+       "       1. , 0.8, 1. , 0.8, 1. , 1. , 1. , 0.8, 1. , 1. , 1. , 1. , 0.8,\n",
+       "       0.8, 1. , 1. , 0.8, 0.6, 1. , 1. , 1. , 1. , 0.8, 1. , 1. , 0.8,\n",
+       "       0.8, 1. , 0.8, 1. , 1. , 1. , 1. , 1. , 1. , 1. , 1. , 1. , 1. ,\n",
+       "       1. , 1. , 1. , 1. , 0.6, 0.8])"
+      ]
+     },
+     "execution_count": 140,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "p_pred_knn_5"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    " "
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Построим модель kNN для 7 ближайших соседей."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 141,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "knn = KNeighborsClassifier(n_neighbors = 7)\n",
+    "\n",
+    "knn.fit(X_train_norm, y_train)\n",
+    "\n",
+    "y_pred_knn_7 = knn.predict(X_test_norm)\n",
+    "\n",
+    "p_pred_knn_7 = knn.predict_proba(X_test_norm) \n",
+    "p_pred_knn_7 = p_pred_knn_7[:, 1]"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 142,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "array([1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,\n",
+       "       1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,\n",
+       "       1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,\n",
+       "       1, 1, 1, 1, 1], dtype=int64)"
+      ]
+     },
+     "execution_count": 142,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "y_pred_knn_7"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 143,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "array([1.        , 1.        , 0.85714286, 1.        , 1.        ,\n",
+       "       0.85714286, 0.85714286, 0.85714286, 1.        , 1.        ,\n",
+       "       1.        , 0.85714286, 0.85714286, 1.        , 0.71428571,\n",
+       "       0.71428571, 1.        , 1.        , 1.        , 0.85714286,\n",
+       "       1.        , 0.71428571, 0.71428571, 1.        , 1.        ,\n",
+       "       1.        , 0.85714286, 0.85714286, 0.85714286, 0.85714286,\n",
+       "       1.        , 0.85714286, 1.        , 0.85714286, 0.85714286,\n",
+       "       0.85714286, 1.        , 1.        , 0.85714286, 0.85714286,\n",
+       "       1.        , 0.85714286, 0.85714286, 0.71428571, 1.        ,\n",
+       "       1.        , 1.        , 1.        , 0.85714286, 1.        ,\n",
+       "       1.        , 0.85714286, 0.85714286, 1.        , 0.85714286,\n",
+       "       1.        , 1.        , 1.        , 1.        , 1.        ,\n",
+       "       1.        , 1.        , 1.        , 1.        , 0.85714286,\n",
+       "       1.        , 0.71428571, 1.        , 0.85714286, 0.71428571,\n",
+       "       0.71428571])"
+      ]
+     },
+     "execution_count": 143,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "p_pred_knn_7"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Я думаю, лучшее число соседей - 7, так как повышается надёжность классификации. Чем больше соседей принадлежит одному классу, тем надёжнее."
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Проверим качество новой модели, а для этого обратимся к метрикам качества."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 144,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "0.8873239436619719\n",
+      "0.9154929577464789\n",
+      "0.9154929577464789\n"
+     ]
+    }
+   ],
+   "source": [
+    "print(accuracy_score(y_test, y_pred_knn_3))\n",
+    "print(accuracy_score(y_test, y_pred_knn_5))\n",
+    "print(accuracy_score(y_test, y_pred_knn_7))"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 145,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "0.9130434782608695\n",
+      "0.9154929577464789\n",
+      "0.9154929577464789\n"
+     ]
+    }
+   ],
+   "source": [
+    "print(precision_score(y_test, y_pred_knn_3))\n",
+    "print(precision_score(y_test, y_pred_knn_5))\n",
+    "print(precision_score(y_test, y_pred_knn_7))"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 146,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "0.9692307692307692\n",
+      "1.0\n",
+      "1.0\n"
+     ]
+    }
+   ],
+   "source": [
+    "print(recall_score(y_test, y_pred_knn_3))\n",
+    "print(recall_score(y_test, y_pred_knn_5))\n",
+    "print(recall_score(y_test, y_pred_knn_7))"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 152,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "0.9402985074626865\n",
+      "0.9558823529411764\n",
+      "0.9558823529411764\n"
+     ]
+    }
+   ],
+   "source": [
+    "print(f1_score(y_test, y_pred_knn_3))\n",
+    "print(f1_score(y_test, y_pred_knn_5))\n",
+    "print(f1_score(y_test, y_pred_knn_7))"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Качество модели не изменилось."
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "**Задание 7.** Какая конфигурация модели получилась лучшей? Почему?Выбираем из всех построенных моделей, не забудьте про наивный прогноз и все рассмотренне варианты числа соседей. "
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Лучшей конфигурацией, на мой взгляд, получилась модель, построенная после шкалирования, а именно вариация из 5 и 7 соседей.\n",
+    "У них получились одинаковые метрики, причём значения больше, чем у модели с тремя соседями. Я думаю, что можно было не убирать выбросы, так как они не повлияли на наш прогноз. Метрики наивного прогноза совпадают с моделью из 5 и 7 соседей."
+   ]
+  }
+ ],
+ "metadata": {
+  "kernelspec": {
+   "display_name": "Python 3 (ipykernel)",
+   "language": "python",
+   "name": "python3"
+  },
+  "language_info": {
+   "codemirror_mode": {
+    "name": "ipython",
+    "version": 3
+   },
+   "file_extension": ".py",
+   "mimetype": "text/x-python",
+   "name": "python",
+   "nbconvert_exporter": "python",
+   "pygments_lexer": "ipython3",
+   "version": "3.9.12"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 4
+}
